@@ -1,0 +1,109 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { text-align: center; background-color: #E2F7E1; }
+        .confirmation-container {
+            width: 400px; background: #fff; padding: 20px;
+            border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 50px auto; text-align: left;
+        }
+        h2 { color: #227C2E; text-align: center; }
+        p { font-size: 16px; color: #333; margin-top: 10px; }
+        .download-btn {
+            width: 100%; background: #56A64B; color: white; padding: 10px;
+            border: none; border-radius: 5px; cursor: pointer; margin-top: 15px;
+            font-size: 16px; transition: 0.3s ease-in-out;
+        }
+        .download-btn:hover { background: #227C2E; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <h2>Payment Successful! 🎉</h2>
+
+    <div class="confirmation-container">
+        <p><strong>Transaction ID:</strong> <span id="txId"></span></p>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Amount Paid:</strong> <span id="amount"></span> <span id="currency"></span></p>
+        <p><strong>Payment Method:</strong> <span id="paymentMethod"></span></p>
+        <p><strong>Status:</strong> <span id="paymentStatus" style="color: green;"></span></p>
+        
+        <button class="download-btn" onclick="downloadReceipt()">Download Receipt</button>
+    </div>
+
+    <script>
+        function loadTransactionDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const transactionRef = urlParams.get("tx_ref");
+            const userEmail = urlParams.get("email");
+            const amountPaid = urlParams.get("amount");
+            const currencyUsed = urlParams.get("currency");
+            const paymentType = urlParams.get("payment_type");
+
+            if (!transactionRef || !userEmail || !amountPaid) {
+                document.getElementById("forexRates").innerHTML = "<p>Error fetching payment details</p>";
+                return;
+            }
+
+            document.getElementById("txId").innerText = transactionRef;
+            document.getElementById("userEmail").innerText = userEmail;
+            document.getElementById("amount").innerText = amountPaid;
+            document.getElementById("currency").innerText = currencyUsed;
+            document.getElementById("paymentMethod").innerText = paymentType;
+            document.getElementById("paymentStatus").innerText = "Successful";
+        }
+
+        function downloadReceipt() {
+            let receiptContent = `
+            --------------------------------
+                PAYMENT RECEIPT
+            --------------------------------
+            Date: ${new Date().toLocaleDateString()}
+            Transaction ID: ${document.getElementById("txId").innerText}
+            Email: ${document.getElementById("userEmail").innerText}
+            Amount: ${document.getElementById("amount").innerText} ${document.getElementById("currency").innerText}
+            Payment Method: ${document.getElementById("paymentMethod").innerText}
+            Status: Successful
+            --------------------------------
+            Thank you for your payment!
+            --------------------------------
+            `;
+
+            let blob = new Blob([receiptContent], { type: "text/plain" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Payment_Receipt.txt";
+            link.click();
+        }
+
+        window.onload = loadTransactionDetails;
+
+    async function verifyPayment() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionRef = urlParams.get("tx_ref");
+
+        if (!transactionRef){
+            console.error("No transaction reference found.");
+            return;
+        }
+
+        let response = await fetch("http://127.0.0.1:8000/payment-webhook/",{
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body:JSON.stringify({tx_ref: transactionRef})
+        });
+
+        let data = await reponse.json();
+        console.log("Payment Verification:",data);
+    }    
+
+    window.onload = verifyPayment;
+    </script>
+
+</body>
+</html>

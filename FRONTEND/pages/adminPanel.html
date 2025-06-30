@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Payments</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        h2 { color: #227C2E; }
+        table { width: 80%; margin: auto; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #56A64B; text-align: left; }
+        th { background: #227C2E; color: white; }
+        .status-success { color: green; }
+        .status-pending { color: orange; }
+        .status-failed { color: red; }
+        #filterInput { width: 300px; padding: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <h2>Admin Panel - Payments</h2>
+
+    <input type="text" id="filterInput" placeholder="Filter by email or status...">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Email</th>
+                <th>Amount</th>
+                <th>Currency</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="paymentsTable"></tbody>
+    </table>
+
+    <script>
+        let allPayments = [];
+
+        async function loadPayments() {
+            let response = await fetch("http://127.0.0.1:8000/admin/payments/");
+            let data = await response.json();
+            allPayments = data.payments;
+            renderPayments(allPayments);
+        }
+
+        function renderPayments(payments) {
+            let tableBody = document.getElementById("paymentsTable");
+            tableBody.innerHTML = "";
+
+            payments.forEach(payment => {
+                let row = `<tr>
+                    <td>${payment.transaction_id}</td>
+                    <td>${payment.email}</td>
+                    <td>${payment.amount}</td>
+                    <td>${payment.currency}</td>
+                    <td>${payment.payment_method}</td>
+                    <td class="status-${payment.status}">${payment.status}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        document.getElementById("filterInput").addEventListener("input", function(e) {
+            let filterText = e.target.value.toLowerCase();
+            let filtered = allPayments.filter(p =>
+                p.email.toLowerCase().includes(filterText) ||
+                p.status.toLowerCase().includes(filterText)
+            );
+            renderPayments(filtered);
+        });
+
+        window.onload = loadPayments;
+    </script>
+
+</body>
+</html>
